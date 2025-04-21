@@ -9,6 +9,6 @@ Gaussian blur noise reduction, and canny edge detection with dynamic threshold b
 ### Background Removal
 Using MOG2, the background is removed and therefore lights up new objects in the frame of reference. This algorithm updates over time to adapt to light conditions or changes in scenery.
 ### Image subtraction
-Finds differences between multiple frames of the live feed, and colors from **yellow** to **red**, depending on intensity of the change. The "positive" motion is masked onto the background removed image.
+Finds differences between multiple frames of the live feed, and colors from **yellow** to **red**, depending on intensity of the change.
 
 [![Edge and Motion Detection Youtube Video](https://img.youtube.com/vi/9QLFio-HLRw/maxresdefault.jpg)](https://www.youtube.com/watch?v=9QLFio-HLRw)

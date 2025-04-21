@@ -19,9 +19,6 @@ class CameraStream:
             print(f"Error: Cannot open camera {self.stream_id}")
             exit(0)
 
-        fps_input_stream = int(self.vcap.get(cv.CAP_PROP_FPS))
-        print("FPS of cam: {}".format(fps_input_stream))
-
         self.grabbed, self.frame = self.vcap.read()
         if not self.grabbed:
             print("Error: Can't read first frame from camera.")
@@ -33,6 +30,10 @@ class CameraStream:
         self.stopped = True
         self.t = Thread(target=self.update, args=())
         self.t.daemon = True
+
+        self.frame_count = 0
+        self.last_time = time.time()
+        self.fps = 0
 
     def start(self):
         self.stopped = False
@@ -54,7 +55,7 @@ class CameraStream:
 
             #motion detection portion of code
             foreground_mask = self.bg_subtractor.apply(curr_frame)
-            _, foreground_mask = cv.threshold(foreground_mask, 127, 255, cv.THRESH_BINARY)
+            _, foreground_mask = cv.threshold(foreground_mask, 20, 255, cv.THRESH_BINARY)
             
             blur_img = cv.GaussianBlur(curr_gray, (3, 3), 0)
             #first determine canny thresholds by finding the average gray value in the image
@@ -70,12 +71,9 @@ class CameraStream:
             #abs difference between frames for motion estimation
             diff = cv.absdiff(curr_gray, prev_gray_local)
             _, motion = cv.threshold(diff, 20, 255, cv.THRESH_BINARY)
-            #combine foreground a motion, leaving only "positive" motion in a direction
-            motion_mask = cv.bitwise_and(foreground_mask, motion)
-            #apply mask
 
             #downsampling for performance
-            small_diff = cv.resize(motion_mask, (curr_frame.shape[1]//4, curr_frame.shape[0]//4))
+            small_diff = cv.resize(motion, (curr_frame.shape[1]//4, curr_frame.shape[0]//4))
             small_mask = cv.resize(foreground_mask, (curr_frame.shape[1]//4, curr_frame.shape[0]//4))
             
             #upsample for display
@@ -91,10 +89,9 @@ class CameraStream:
                 for x in range(0, width, 4):
                     if display_mask[y, x] > 0:
                         intensity = display_diff[y, x]
-                        green = max(0, 255 - intensity)
+                        color = max(0, 255 - intensity)
                         
-
-                        combined_output[y, x] = [0, green, 255]
+                        combined_output[y, x] = [0, color, 255]
             
             alpha = 0
             mask = edges > 0
@@ -109,6 +106,15 @@ class CameraStream:
                         combined_output[mask] = cv.addWeighted(frame_region, alpha, edge_region, 1-alpha, 0)
                 except:
                     pass
+
+            self.frame_count += 1
+            current_time = time.time()
+            if (current_time - self.last_time) >= 1.0:
+                self.fps = self.frame_count / (current_time - self.last_time)
+                self.last_time = current_time
+                self.frame_count = 0
+
+            cv.putText(combined_output, f"{self.fps:.2f} FPS", (10,20), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1, cv.LINE_AA)
 
             with self.lock:
                 self.prev_gray = curr_gray.copy()
