@@ -1,0 +1,5 @@
+Package: optical-heat-map
+Version: 1.0
+Architecture: all
+Maintainer: Evan Brown
+Description: Edge and Motion Detection
