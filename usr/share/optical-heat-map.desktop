@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Optical Heat Map
+Comment=Live motion and edge detection camera visualization
+Exec=/usr/bin/optical-heat-map
+Icon=optical-heat-map
+Terminal=true
+Type=Application
+Categories=Utility;Video;
